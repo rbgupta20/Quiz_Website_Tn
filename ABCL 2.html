@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ABCL Factoring Credit Program Quiz</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f5f5f5;
+        margin: 0;
+        padding: 20px;
+    }
+    #container {
+        max-width: 700px;
+        margin: auto;
+        background: #fff;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .hidden { display: none; }
+    button {
+        margin-top: 15px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+    .option-btn {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        margin: 8px 0;
+        text-align: left;
+        cursor: pointer;
+    }
+    .incorrect-block {
+        background: #ffecec;
+        padding: 10px;
+        border-left: 4px solid red;
+        margin-bottom: 10px;
+        border-radius: 6px;
+    }
+</style>
+</head>
+<body>
+
+<div id="container">
+    <div id="start-screen">
+        <h2>Welcome to the ABCL Factoring Credit Program Quiz!</h2>
+        <p>Please enter your name to begin:</p>
+        <input id="username" type="text" placeholder="Your name" />
+        <button onclick="startQuiz()">Start Quiz</button>
+    </div>
+
+    <div id="quiz-screen" class="hidden">
+        <p id="greeting"></p>
+        <h3 id="question-text"></h3>
+        <div id="options"></div>
+    </div>
+
+    <div id="result-screen" class="hidden">
+        <h2>Your Quiz Results</h2>
+        <p id="score"></p>
+        <p id="rating"></p>
+        <h3>Incorrect Answers:</h3>
+        <div id="incorrect-list"></div>
+        <h3>Thank you for taking the quiz!</h3>
+    </div>
+</div>
+
+<script>
+// ------------------- QUIZ DATA -------------------
+const questions = [
+    {
+        q: "Under the ABCL Factoring Credit Program, when your company sells steel to a customer and the invoice is raised, the receivable is legally transferred through a Notice of Assignment (NOA). Who becomes the new legal owner of that receivable?",
+        a: [
+            "The buyer (your customer)",
+            "Your company (the seller)",
+            "Aditya Birla Capital Limited (ABCL), as the assignee",
+            "The bank used by ABCL"
+        ],
+        correct: "c"
+    },
+    {
+        q: "Once the receivable is assigned, the buyer must make payment strictly according to the payment instructions in the NOA. To whom must the buyer make the payment?",
+        a: [
+            "Your company’s regular bank account",
+            "A logistics partner or transport vendor",
+            "ABCL’s designated HDFC Bank account mentioned in the NOA",
+            "Any account that the buyer prefers"
+        ],
+        correct: "c"
+    },
+    {
+        q: "According to the NOA, when the buyer pays ABCL, must the payment be made without deductions or adjustments of any kind?",
+        a: [
+            "Yes, they may deduct any amount they believe is justified",
+            "Yes, but only after giving written notice",
+            "No. Payment must be made in full without any deduction, set-off, or dispute",
+            "Yes, but only for approved quality-related issues"
+        ],
+        correct: "c"
+    },
+    {
+        q: "What is the rate of additional interest charged to the buyer for delayed payment beyond the due date?",
+        a: ["1% per annum", "2% per annum", "5% per annum", "10% per annum"],
+        correct: "c"
+    },
+    {
+        q: "The NOA states that payment instructions given to the buyer are “irrevocable and unconditional.” What does this mean?",
+        a: [
+            "The buyer may change the payment instructions anytime",
+            "The buyer may change them with approval of the seller only",
+            "The buyer cannot change them; only ABCL can approve or modify those instructions",
+            "The buyer may request changes after goods are received"
+        ],
+        correct: "c"
+    },
+    {
+        q: "Which entity is responsible for issuing and signing the NOA to the buyer?",
+        a: [
+            "The buyer",
+            "Tata Business Hub Limited (the assignor)",
+            "ABCL",
+            "The bank processing the payment"
+        ],
+        correct: "b"
+    },
+    {
+        q: "Before a buyer can legally accept the NOA, which internal document must the buyer provide to authorize officials to sign the acknowledgement?",
+        a: [
+            "A signed purchase order",
+            "Vendor onboarding or KYC documents",
+            "A Board Resolution authorizing designated officials to accept the NOA",
+            "Their GST registration certificate"
+        ],
+        correct: "c"
+    },
+    {
+        q: "Once the Board Resolution is approved, who is permitted to sign the NOA acceptance?",
+        a: [
+            "Any employee of the buyer",
+            "Only the Managing Director",
+            "Only officials named in the Board Resolution as 'Authorized Officials'",
+            "Only members of the finance/accounts team"
+        ],
+        correct: "c"
+    },
+    {
+        q: "After the receivables are assigned to ABCL, which rights are transferred?",
+        a: [
+            "Only the right to receive payment",
+            "Only the right to charge interest",
+            "All rights related to the receivables, including recovery and legal action",
+            "The right to renegotiate the commercial contract"
+        ],
+        correct: "c"
+    },
+    {
+        q: "Once the invoice is assigned and ABCL pays your company upfront, who carries the credit and collection risk?",
+        a: [
+            "Your company (the seller)",
+            "The buyer",
+            "ABCL (since they have purchased the receivable)",
+            "The logistics or delivery partner"
+        ],
+        correct: "c"
+    }
+];
+
+let userName = "";
+let index = 0;
+let userAnswers = [];
+let incorrect = [];
+
+// --------------------- QUIZ FLOW -----------------------
+function startQuiz() {
+    userName = document.getElementById("username").value.trim();
+    if (!userName) {
+        alert("Please enter your name.");
+        return;
+    }
+
+    document.getElementById("start-screen").classList.add("hidden");
+    document.getElementById("quiz-screen").classList.remove("hidden");
+
+    document.getElementById("greeting").innerHTML =
+        `Great, <b>${userName}</b>, let’s begin your quiz. There are 10 questions, each worth 1 point. Please answer using a, b, c, or d.`;
+
+    loadQuestion();
+}
+
+function loadQuestion() {
+    const q = questions[index];
+    document.getElementById("question-text").innerText = `Q${index+1}. ${q.q}`;
+
+    const letters = ["a","b","c","d"];
+    let html = "";
+
+    q.a.forEach((opt, i) => {
+        html += `<button class="option-btn" onclick="submitAnswer('${letters[i]}')">${letters[i]}. ${opt}</button>`;
+    });
+
+    document.getElementById("options").innerHTML = html;
+}
+
+// User selects answer
+function submitAnswer(answer) {
+    userAnswers.push(answer);
+
+    if (questions[index].correct !== answer) {
+        incorrect.push({
+            question: questions[index].q,
+            yourAnswer: answer,
+            correctAnswer: questions[index].correct,
+            options: questions[index].a
+        });
+    }
+
+    index++;
+
+    if (index < questions.length) {
+        loadQuestion();
+    } else {
+        showResults();
+    }
+}
+
+// --------------------- RESULTS --------------------------
+function showResults() {
+    document.getElementById("quiz-screen").classList.add("hidden");
+    document.getElementById("result-screen").classList.remove("hidden");
+
+    const totalCorrect = questions.length - incorrect.length;
+
+    // Rating logic
+    let rating = 1;
+    if (totalCorrect >= 9) rating = 5;
+    else if (totalCorrect >= 7) rating = 4;
+    else if (totalCorrect >= 5) rating = 3;
+    else if (totalCorrect >= 3) rating = 2;
+
+    document.getElementById("score").innerHTML =
+        `<b>Total Score:</b> ${totalCorrect}/10`;
+
+    document.getElementById("rating").innerHTML =
+        `<b>Rating:</b> ${rating}/5`;
+
+    const list = document.getElementById("incorrect-list");
+    list.innerHTML = "";
+
+    if (incorrect.length === 0) {
+        list.innerHTML = "<p>🎉 Perfect score! No incorrect answers.</p>";
+    } else {
+        incorrect.forEach(item => {
+            const div = document.createElement("div");
+            div.className = "incorrect-block";
+
+            div.innerHTML = `
+                <b>Question:</b> ${item.question}<br><br>
+                <b>❌ Your Answer:</b> ${item.yourAnswer}. ${item.options["abcd".indexOf(item.yourAnswer)]}<br>
+                <b>✅ Correct Answer:</b> ${item.correctAnswer}. ${item.options["abcd".indexOf(item.correctAnswer)]}
+            `;
+
+            list.appendChild(div);
+        });
+    }
+}
+</script>
+
+</body>
+</html>
